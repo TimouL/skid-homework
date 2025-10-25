@@ -3,6 +3,7 @@ import { OpenAiClient } from "@/ai/openai";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { AiChatMessage } from "@/ai/chat-types";
+import { createId } from "@/utils/id";
 
 export type AiProvider = "gemini" | "openai";
 
@@ -153,7 +154,7 @@ export const useAiStore = create<AiStore>()(
       activeSourceId: "gemini-default",
 
       addSource: (source) => {
-        const id = crypto.randomUUID();
+        const id = createId("ai");
         set((state) => ({
           sources: [
             ...state.sources,

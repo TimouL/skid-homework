@@ -7,6 +7,7 @@ import PreviewCard from "../cards/PreviewCard";
 import { SOLVE_SYSTEM_PROMPT } from "@/ai/prompts";
 import { uint8ToBase64 } from "@/utils/encoding";
 import { parseSolveResponse } from "@/ai/response";
+import { createId } from "@/utils/id";
 
 import {
   useProblemsStore,
@@ -131,7 +132,7 @@ export default function ScanPage() {
       if (arr.length === 0) return;
 
       const initialItems: FileItem[] = arr.map((file) => ({
-        id: crypto.randomUUID(),
+        id: createId("file"),
         file,
         mimeType: file.type,
         url: URL.createObjectURL(file),
