@@ -120,6 +120,29 @@ Skid-Homework 不会要求你下载桌面软件, 一切东西都在浏览器内�
 
 本项目使用 GPLv3 授权, 开发者无权控制软件的分发.
 
+## Docker 部署
+
+项目内置多阶段 `Dockerfile`，可直接构建静态站点镜像并由 Nginx 托管。默认监听 `80` 端口，如需兼容 PaaS 动态端口，可在运行时通过环境变量 `PORT` 覆盖。
+
+```bash
+# 本地构建
+docker build -t ghcr.io/<owner>/skid-homework:latest .
+
+# 运行容器
+docker run -d --name skid-homework -p 3000:80 ghcr.io/<owner>/skid-homework:latest
+
+# 覆盖端口（示例：Render/Heroku 等平台）
+docker run -d -e PORT=8080 -p 8080:8080 ghcr.io/<owner>/skid-homework:latest
+```
+
+当仓库托管在 GitHub 时，可以使用 `.github/workflows/publish-ghcr.yml` 手动触发构建并推送镜像：
+
+1. 打开 GitHub 仓库的 **Actions** 页面，选择 **Publish Docker Image**；
+2. 点击 **Run workflow**，可选输入 `tag`（默认 `latest`）；
+3. 工作流会自动构建、登录 ghcr.io，并将镜像推送到 `ghcr.io/<owner>/skid-homework:<tag>`。
+
+> 镜像发布后，可通过 `docker pull ghcr.io/<owner>/skid-homework:<tag>` 获取部署。
+
 ## 开发
 
 - Clone 本存储库
