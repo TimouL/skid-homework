@@ -46,6 +46,7 @@ export default function ScanPage() {
 
   const { imageBinarizing } = useSettingsStore((s) => s);
   const imageBinarizingRef = useRef(imageBinarizing);
+  const objectUrlUsageRef = useRef<Map<string, number>>(new Map());
 
   // Zustand store for AI provider configuration.
   const sources = useAiStore((state) => state.sources);
@@ -90,12 +91,34 @@ export default function ScanPage() {
     }
   }, [items.length]);
 
-  // Effect hook to clean up object URLs when the component unmounts or items change.
+  useEffect(() => {
+    imageBinarizingRef.current = imageBinarizing;
+  }, [imageBinarizing]);
+
+  useEffect(() => {
+    const nextUsage = new Map<string, number>();
+    items.forEach((item) => {
+      nextUsage.set(item.url, (nextUsage.get(item.url) ?? 0) + 1);
+    });
+
+    const prevUsage = objectUrlUsageRef.current;
+    prevUsage.forEach((_, url) => {
+      if (!nextUsage.has(url)) {
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    objectUrlUsageRef.current = nextUsage;
+  }, [items]);
+
   useEffect(() => {
     return () => {
-      items.forEach((it) => URL.revokeObjectURL(it.url));
+      objectUrlUsageRef.current.forEach((_, url) => {
+        URL.revokeObjectURL(url);
+      });
+      objectUrlUsageRef.current.clear();
     };
-  }, [items]);
+  }, []);
 
   // Memoized calculation of the total size of all uploaded files.
   const totalBytes = useMemo(

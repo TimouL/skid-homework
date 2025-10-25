@@ -58,17 +58,76 @@ export default function SolutionViewer({
   const activeProblem =
     problemCount > 0 ? entry.solutions.problems[safeIndex] : null;
 
-  const copyToClipboard = async (text: string) => {
+  const fallbackCopyText = (text: string) => {
+    if (typeof document === "undefined") return false;
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "0";
+
+    const activeElement = document.activeElement as HTMLElement | null;
+    const selection = document.getSelection();
+    const originalRange =
+      selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+    document.body.appendChild(textarea);
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+
+    let succeeded = false;
     try {
-      await navigator.clipboard.writeText(text);
+      succeeded = document.execCommand("copy");
+    } catch {
+      succeeded = false;
+    }
+
+    document.body.removeChild(textarea);
+
+    if (originalRange && selection) {
+      selection.removeAllRanges();
+      selection.addRange(originalRange);
+    } else {
+      selection?.removeAllRanges();
+    }
+
+    activeElement?.focus();
+
+    return succeeded;
+  };
+
+  const copyToClipboard = async (text: string) => {
+    const canUseSecureClipboard =
+      typeof window !== "undefined" &&
+      typeof navigator !== "undefined" &&
+      Boolean(navigator.clipboard) &&
+      window.isSecureContext;
+
+    if (canUseSecureClipboard) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast(t("copy.success.title"), {
+          description: t("copy.success.description"),
+        });
+        return;
+      } catch {
+        // fall back to legacy path
+      }
+    }
+
+    const fallbackSucceeded = fallbackCopyText(text);
+    if (fallbackSucceeded) {
       toast(t("copy.success.title"), {
         description: t("copy.success.description"),
       });
-    } catch {
-      toast(t("copy.failed.title"), {
-        description: t("copy.failed.description"),
-      });
+      return;
     }
+
+    toast(t("copy.failed.title"), {
+      description: t("copy.failed.description"),
+    });
   };
 
   const dialogRef = useRef<ImproveSolutionDialogHandle>(null);
